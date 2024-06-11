@@ -21,12 +21,12 @@ class _CustomButtonState extends State<CustomButton> {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(8.0),
+      borderRadius: BorderRadius.circular(20.0),
       elevation: 14.0,
       child: InkWell(
         onTap: widget.onPressed,
-        borderRadius: BorderRadius.circular(8.0),
-        splashColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20.0),
+        splashColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6),
         onTapDown: (_) {
           setState(() {
             _isPressed = true;
