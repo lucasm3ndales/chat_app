@@ -1,9 +1,10 @@
+import 'package:chat_app/service/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:chat_app/widget/custom_button.dart';
 import 'package:chat_app/widget/custom_field.dart';
 
 class LoginView extends StatelessWidget {
-  LoginView({Key? key}) : super(key: key);
+  LoginView({super.key});
 
   final GlobalKey<FormState> _loginForm = GlobalKey<FormState>();
 
@@ -24,6 +25,23 @@ class LoginView extends StatelessWidget {
       return 'Senha inválida!';
     }
     return null;
+  }
+
+  void login(BuildContext context) async {
+    final _authService = AuthService();
+    try {
+      await _authService.signWithEmailPass(
+          _emailController.text, _passController.text);
+    } catch (ex) {
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text(
+                  ex.toString(),
+                  style: TextStyle(),
+                ),
+              ));
+    }
   }
 
   @override
@@ -96,7 +114,7 @@ class LoginView extends StatelessWidget {
                       text: 'Logar',
                       onPressed: () => {
                         if (_loginForm.currentState!.validate())
-                          {print('LOGAR')},
+                          {login(context)},
                       },
                     ),
                     const SizedBox(height: 72.0),

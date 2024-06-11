@@ -3,7 +3,7 @@ import 'package:chat_app/widget/custom_field.dart';
 import 'package:flutter/material.dart';
 
 class RegisterView extends StatefulWidget {
-  RegisterView({Key? key});
+  const RegisterView({super.key});
 
   @override
   _RegisterViewState createState() => _RegisterViewState();
@@ -20,8 +20,8 @@ class _RegisterViewState extends State<RegisterView> {
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
 
-  bool _obscureTextPass = true;
-  bool _obscureTextConfirmPass = true;
+  bool obscureTextPass = true;
+  bool obscureTextConfirmPass = true;
 
   String? verifyName(String value) {
     if (value.isEmpty) {
@@ -240,15 +240,15 @@ class _RegisterViewState extends State<RegisterView> {
                         controller: _passController,
                         hintText: 'Senha*',
                         prefixIcon: Icons.lock_outline_sharp,
-                        suffixIcon: _obscureTextPass
+                        suffixIcon: obscureTextPass
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                         onSuffixIconPressed: () {
                           setState(() {
-                            _obscureTextPass = !_obscureTextPass;
+                            obscureTextPass = !obscureTextPass;
                           });
                         },
-                        obscureText: _obscureTextPass,
+                        obscureText: obscureTextPass,
                       ),
                       const SizedBox(height: 16.0),
                       CustomField(
@@ -258,15 +258,15 @@ class _RegisterViewState extends State<RegisterView> {
                         controller: _confirmPassController,
                         prefixIcon: Icons.lock_outline_sharp,
                         hintText: 'Confirmar Senha*',
-                        suffixIcon: _obscureTextConfirmPass
+                        suffixIcon: obscureTextConfirmPass
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                         onSuffixIconPressed: () {
                           setState(() {
-                            _obscureTextConfirmPass = !_obscureTextConfirmPass;
+                            obscureTextConfirmPass = !obscureTextConfirmPass;
                           });
                         },
-                        obscureText: _obscureTextConfirmPass,
+                        obscureText: obscureTextConfirmPass,
                       ),
                       const SizedBox(height: 32.0),
                       CustomButton(
