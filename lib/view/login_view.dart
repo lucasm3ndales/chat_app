@@ -1,4 +1,6 @@
 import 'package:chat_app/service/auth_service.dart';
+import 'package:cherry_toast/cherry_toast.dart';
+import 'package:cherry_toast/resources/arrays.dart';
 import 'package:flutter/material.dart';
 import 'package:chat_app/widget/custom_button.dart';
 import 'package:chat_app/widget/custom_field.dart';
@@ -28,19 +30,26 @@ class LoginView extends StatelessWidget {
   }
 
   void login(BuildContext context) async {
-    final _authService = AuthService();
+    final authService = AuthService();
     try {
-      await _authService.signWithEmailPass(
+      await authService.siginWithEmailPass(
           _emailController.text, _passController.text);
     } catch (ex) {
-      showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-                title: Text(
-                  ex.toString(),
-                  style: TextStyle(),
-                ),
-              ));
+      CherryToast.error(
+        toastPosition: Position.top,
+        backgroundColor: Theme.of(context).colorScheme.background,
+        iconWidget: Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error,),
+        borderRadius: 12,
+        displayCloseButton: false,
+        animationType: AnimationType.fromTop,
+        toastDuration: const Duration(seconds: 3),
+        title: Text(
+          'E-mail ou senha inválidos!',
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary,
+              fontWeight: FontWeight.w700),
+        ),
+      ).show(context);
     }
   }
 

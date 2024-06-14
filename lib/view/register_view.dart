@@ -1,22 +1,26 @@
+import 'package:chat_app/model/user_model.dart';
+import 'package:chat_app/service/auth_service.dart';
 import 'package:chat_app/widget/custom_button.dart';
 import 'package:chat_app/widget/custom_field.dart';
+import 'package:cherry_toast/cherry_toast.dart';
+import 'package:cherry_toast/resources/arrays.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
 
   @override
-  _RegisterViewState createState() => _RegisterViewState();
-
+  State<RegisterView> createState() => _RegisterViewState();
 }
 
 class _RegisterViewState extends State<RegisterView> {
-
   final GlobalKey<FormState> _registerForm = GlobalKey<FormState>();
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _phoneController =
+      MaskedTextController(mask: '(+00) 00 0 0000-0000');
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
 
@@ -54,7 +58,7 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   String? verifyPhone(String value) {
-    RegExp regex = RegExp(r'^\(\d{2}\) \d{2} \d \d{8}$');
+    RegExp regex = RegExp(r'^\(\+\d{2}\) \d{2} \d \d{4}-\d{4}$');
 
     if (value.isEmpty) {
       return 'Telefone requerido!';
@@ -80,32 +84,95 @@ class _RegisterViewState extends State<RegisterView> {
       return 'A senha não pode ser igual ao nome do usuário';
     }
 
-    if (value != _confirmPassController) {
+    if (value != _confirmPassController.text) {
       return 'As senhas não coincidem!';
     }
+
     return null;
   }
 
   String? verifyConfirmPass(String value) {
-    if (value != _passController) {
+    if (value.isEmpty) {
+      return 'Senha requerida!';
+    }
+
+    if (value.length < 6) {
+      return 'A senha deve ter no mínimo 6 characteres';
+    }
+
+    if (value == _nameController) {
+      return 'A senha não pode ser igual ao nome do usuário';
+    }
+
+    if (value != _passController.text) {
       return 'As senhas não coincidem!';
     }
 
     return null;
   }
 
+  void submitForm(BuildContext context) async {
+    if (_registerForm.currentState!.validate()) {
+      final AuthService authService = AuthService();
+      UserDTO dto = UserDTO(
+          name: _nameController.text,
+          phone: _phoneController.text,
+          email: _emailController.text,
+          password: _passController.text);
+      try {
+        String res = await authService.signUp(dto);
+
+        if (res.isNotEmpty) {
+
+          CherryToast.success(
+            toastPosition: Position.top,
+            backgroundColor: Theme.of(context).colorScheme.background,
+            iconWidget: Icon(
+              Icons.check_circle_outline_outlined,
+              color: Theme.of(context).colorScheme.surface,
+            ),
+            borderRadius: 12,
+            displayCloseButton: false,
+            animationType: AnimationType.fromTop,
+            toastDuration: const Duration(seconds: 3),
+            title: Text(
+              res,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.secondary,
+                  fontWeight: FontWeight.w700),
+            ),
+          ).show(context);
+          Navigator.pop(context, '/');
+        }
+      } catch (ex) {
+        CherryToast.error(
+          toastPosition: Position.top,
+          backgroundColor: Theme.of(context).colorScheme.background,
+          iconWidget: Icon(
+            Icons.error_outline,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          borderRadius: 12,
+          displayCloseButton: false,
+          animationType: AnimationType.fromTop,
+          toastDuration: const Duration(seconds: 3),
+          title: Text(
+            'Erro ao criar conta de usuário!',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.secondary,
+                fontWeight: FontWeight.w700),
+          ),
+        ).show(context);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Theme
-          .of(context)
-          .colorScheme
-          .background,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
           if (details.primaryVelocity! < 0) {
@@ -122,10 +189,7 @@ class _RegisterViewState extends State<RegisterView> {
                   margin: EdgeInsets.only(top: 64.0),
                   height: screenHeight * 0.1,
                   decoration: BoxDecoration(
-                    color: Theme
-                        .of(context)
-                        .colorScheme
-                        .background,
+                    color: Theme.of(context).colorScheme.background,
                   ),
                   child: Column(
                     children: [
@@ -137,10 +201,7 @@ class _RegisterViewState extends State<RegisterView> {
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                           Container(
@@ -148,10 +209,7 @@ class _RegisterViewState extends State<RegisterView> {
                             child: Icon(
                               Icons.message_outlined,
                               size: 50,
-                              color: Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         ],
@@ -165,10 +223,7 @@ class _RegisterViewState extends State<RegisterView> {
                           Text(
                             'Crie sua conta!',
                             style: TextStyle(
-                                color: Theme
-                                    .of(context)
-                                    .colorScheme
-                                    .tertiary,
+                                color: Theme.of(context).colorScheme.secondary,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 20.0),
                           )
@@ -180,11 +235,8 @@ class _RegisterViewState extends State<RegisterView> {
                 Container(
                   width: double.infinity,
                   margin:
-                  EdgeInsets.symmetric(horizontal: 16.0, vertical: 72.0),
-                  color: Theme
-                      .of(context)
-                      .colorScheme
-                      .background,
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 72.0),
+                  color: Theme.of(context).colorScheme.background,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -196,10 +248,7 @@ class _RegisterViewState extends State<RegisterView> {
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14.0,
-                                color: Theme
-                                    .of(context)
-                                    .colorScheme
-                                    .error),
+                                color: Theme.of(context).colorScheme.error),
                           ),
                         ],
                       ),
@@ -229,6 +278,7 @@ class _RegisterViewState extends State<RegisterView> {
                           return verifyPhone(value!);
                         },
                         controller: _phoneController,
+                        description: 'Telefone: (+xx) xx x xxxx-xxxx',
                         prefixIcon: Icons.phone_android_outlined,
                         hintText: 'Telefone*',
                       ),
@@ -271,11 +321,7 @@ class _RegisterViewState extends State<RegisterView> {
                       const SizedBox(height: 32.0),
                       CustomButton(
                         text: 'Criar Conta',
-                        onPressed: () =>
-                        {
-                          if (_registerForm.currentState!.validate())
-                            {print('Criar conta')},
-                        },
+                        onPressed: () => {submitForm(context)},
                       ),
                       const SizedBox(height: 72.0),
                       GestureDetector(
@@ -285,10 +331,7 @@ class _RegisterViewState extends State<RegisterView> {
                         child: Text(
                           'Já tem conta? Clique aqui!',
                           style: TextStyle(
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .primary,
+                            color: Theme.of(context).colorScheme.primary,
                             fontSize: 16.0,
                             fontWeight: FontWeight.bold,
                           ),
@@ -306,4 +349,3 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 }
-
