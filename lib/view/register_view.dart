@@ -1,5 +1,6 @@
 import 'package:chat_app/model/user_model.dart';
 import 'package:chat_app/service/auth_service.dart';
+import 'package:chat_app/view/login_view.dart';
 import 'package:chat_app/widget/custom_button.dart';
 import 'package:chat_app/widget/custom_field.dart';
 import 'package:cherry_toast/cherry_toast.dart';
@@ -23,6 +24,9 @@ class _RegisterViewState extends State<RegisterView> {
       MaskedTextController(mask: '(+00) 00 0 0000-0000');
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+
 
   bool obscureTextPass = true;
   bool obscureTextConfirmPass = true;
@@ -80,7 +84,7 @@ class _RegisterViewState extends State<RegisterView> {
       return 'A senha deve ter no mínimo 6 characteres';
     }
 
-    if (value == _nameController) {
+    if (value == _nameController.text) {
       return 'A senha não pode ser igual ao nome do usuário';
     }
 
@@ -100,12 +104,28 @@ class _RegisterViewState extends State<RegisterView> {
       return 'A senha deve ter no mínimo 6 characteres';
     }
 
-    if (value == _nameController) {
+    if (value == _nameController.text) {
       return 'A senha não pode ser igual ao nome do usuário';
     }
 
     if (value != _passController.text) {
       return 'As senhas não coincidem!';
+    }
+
+    return null;
+  }
+
+  String? verifyContry(String value) {
+    if (value.isEmpty) {
+      return 'País requerido!';
+    }
+
+    return null;
+  }
+
+  String? verifyCity(String value) {
+    if (value.isEmpty) {
+      return 'Cidade requerida!';
     }
 
     return null;
@@ -118,6 +138,8 @@ class _RegisterViewState extends State<RegisterView> {
           name: _nameController.text,
           phone: _phoneController.text,
           email: _emailController.text,
+          country: _countryController.text,
+          city: _cityController.text,
           password: _passController.text);
       try {
         String res = await authService.signUp(dto);
@@ -186,7 +208,7 @@ class _RegisterViewState extends State<RegisterView> {
               children: [
                 Container(
                   width: double.infinity,
-                  margin: EdgeInsets.only(top: 64.0),
+                  margin: const EdgeInsets.only(top: 64.0),
                   height: screenHeight * 0.1,
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.background,
@@ -205,7 +227,7 @@ class _RegisterViewState extends State<RegisterView> {
                             ),
                           ),
                           Container(
-                            margin: EdgeInsets.only(left: 4.0),
+                            margin: const EdgeInsets.only(left: 4.0),
                             child: Icon(
                               Icons.message_outlined,
                               size: 50,
@@ -235,7 +257,7 @@ class _RegisterViewState extends State<RegisterView> {
                 Container(
                   width: double.infinity,
                   margin:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 72.0),
+                      const EdgeInsets.symmetric(horizontal: 16.0, vertical: 72.0),
                   color: Theme.of(context).colorScheme.background,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -262,6 +284,24 @@ class _RegisterViewState extends State<RegisterView> {
                         controller: _nameController,
                         prefixIcon: Icons.account_circle_outlined,
                         hintText: 'Nome*',
+                      ),
+                      const SizedBox(height: 16.0),
+                      CustomField(
+                        validator: (value) {
+                          return verifyContry(value!);
+                        },
+                        controller: _countryController,
+                        prefixIcon: Icons.pin_drop_outlined,
+                        hintText: 'País*',
+                      ),
+                      const SizedBox(height: 16.0),
+                      CustomField(
+                        validator: (value) {
+                          return verifyCity(value!);
+                        },
+                        controller: _cityController,
+                        prefixIcon: Icons.pin_drop_outlined,
+                        hintText: 'Cidade*',
                       ),
                       const SizedBox(height: 16.0),
                       CustomField(
@@ -326,7 +366,7 @@ class _RegisterViewState extends State<RegisterView> {
                       const SizedBox(height: 72.0),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushNamed(context, '/');
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => LoginView()));
                         },
                         child: Text(
                           'Já tem conta? Clique aqui!',

@@ -9,9 +9,12 @@ class CustomField extends StatelessWidget {
   final IconData? suffixIcon;
   final VoidCallback? onSuffixIconPressed;
   final String? description;
+  final TextStyle? textStyle;
+  final bool isFiled;
+  final Color? filedColor;
 
   const CustomField({
-    Key? key,
+    super.key,
     required this.hintText,
     required this.controller,
     this.validator,
@@ -20,7 +23,10 @@ class CustomField extends StatelessWidget {
     this.suffixIcon,
     this.onSuffixIconPressed,
     this.description,
-  }) : super(key: key);
+    this.textStyle,
+    this.isFiled = false,
+    this.filedColor
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +34,13 @@ class CustomField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextFormField(
+          style: textStyle,
           validator: validator,
           obscureText: obscureText,
           controller: controller,
           decoration: InputDecoration(
+            filled: isFiled,
+            fillColor: filedColor,
             hintText: hintText,
             prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
             suffixIcon: suffixIcon != null

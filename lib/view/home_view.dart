@@ -13,10 +13,10 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
 
-  static List<Widget> _widgetOptions = <Widget>[
-    UsersView(),
-    ChatsView(),
-    SettingsView(),
+  static final List<Widget> _widgetOptions = <Widget>[
+    const UsersView(),
+    const ChatsView(),
+    const SettingsView(),
   ];
 
   void _onItemTapped(int index) {
@@ -50,7 +50,7 @@ class _HomeViewState extends State<HomeView> {
               ),
             ),
             Container(
-              margin: EdgeInsets.only(left: 4.0),
+              margin: const EdgeInsets.only(left: 4.0),
               child: Icon(
                 Icons.message_outlined,
                 size: 40,

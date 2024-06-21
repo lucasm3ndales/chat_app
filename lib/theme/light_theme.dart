@@ -5,7 +5,7 @@ ThemeData lightMode = ThemeData(
     background: Colors.white,
     primary: Colors.deepPurple.shade700,
     secondary: Colors.black,
-    tertiary: Colors.grey.shade500,
+    tertiary: Colors.grey.shade400,
     error: Colors.red.shade700,
     surface: Colors.green.shade700
   )

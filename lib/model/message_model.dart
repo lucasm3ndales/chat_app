@@ -1,15 +1,27 @@
-import 'package:chat_app/model/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Message {
-  String content;
-  User sender;
-  User receiver;
-  DateTime sentAt;
+  String message;
+  String senderName;
+  String senderId;
+  String receiverId;
+  Timestamp sentAt;
 
   Message({
-    required this.content,
-    required this.sender,
-    required this.receiver,
-    required this.sentAt
+    required this.message,
+    required this.senderId,
+    required this.receiverId,
+    required this.sentAt,
+    required this.senderName,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'senderId': senderId,
+      'senderName': senderName,
+      'receiverId': receiverId,
+      'sentAt': sentAt,
+      'message': message,
+    };
+  }
 }

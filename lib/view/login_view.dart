@@ -1,4 +1,5 @@
 import 'package:chat_app/service/auth_service.dart';
+import 'package:chat_app/view/register_view.dart';
 import 'package:cherry_toast/cherry_toast.dart';
 import 'package:cherry_toast/resources/arrays.dart';
 import 'package:flutter/material.dart';
@@ -95,7 +96,7 @@ class LoginView extends StatelessWidget {
               ),
               Container(
                 width: double.infinity,
-                margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 72.0),
+                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 72.0),
                 color: Theme.of(context).colorScheme.background,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -129,7 +130,7 @@ class LoginView extends StatelessWidget {
                     const SizedBox(height: 72.0),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/register');
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterView()));
                       },
                       child: Text(
                         'Não tem conta? Clique aqui!',

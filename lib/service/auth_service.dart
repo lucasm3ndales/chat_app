@@ -38,9 +38,8 @@ class AuthService {
         'phone': phone,
         'email': dto.email.trim(),
         'password': encrypted,
-        'country': '',
-        'city': '',
-        'bio': '',
+        'country': dto.country.trim(),
+        'city': dto.city.trim(),
         'profileImageUrl': '',
       });
 
@@ -49,6 +48,7 @@ class AuthService {
       throw Exception(ex);
     }
   }
+
 
   Future<void> signOut() async {
     return await _auth.signOut();

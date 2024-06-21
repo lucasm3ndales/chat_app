@@ -1,6 +1,5 @@
-
-
-import 'package:flutter/cupertino.dart';
+import 'package:chat_app/service/auth_service.dart';
+import 'package:chat_app/widget/custom_button.dart';
 import 'package:flutter/material.dart';
 
 class SettingsView extends StatefulWidget {
@@ -11,10 +10,13 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
+  final AuthService authService = AuthService();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Text('OIII'),
+      body: CustomButton(text: 'LOGOUT', onPressed: () => {
+        authService.signOut()
+      })
     );
   }
 }

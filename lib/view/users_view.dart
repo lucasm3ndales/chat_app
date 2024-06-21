@@ -1,16 +1,16 @@
 import 'package:chat_app/service/user_service.dart';
+import 'package:chat_app/view/chat_messages_view.dart';
 import 'package:chat_app/widget/user_item.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class UsersView extends StatefulWidget {
-  UsersView({super.key});
+  const UsersView({super.key});
 
   @override
-  State<UsersView> createState() => _UserViewState();
+  State<UsersView> createState() => _UsersViewState();
 }
 
-class _UserViewState extends State<UsersView> {
+class _UsersViewState extends State<UsersView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,8 +22,9 @@ class _UserViewState extends State<UsersView> {
             title: Text(
               'Usuários',
               style: TextStyle(
+                fontSize: 24.0,
                 color: Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.bold
+                fontWeight: FontWeight.bold,
               ),
             ),
             backgroundColor: Theme.of(context).colorScheme.background,
@@ -33,36 +34,80 @@ class _UserViewState extends State<UsersView> {
       body: _userListWidget(),
     );
   }
-}
 
-Widget _userListWidget() {
-  final UserService _userService = UserService();
+  Widget _userListWidget() {
+    final UserService userService = UserService();
 
-  return StreamBuilder(
-      stream: _userService.getUsers(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Text('Error');
+    return FutureBuilder<String?>(
+      future: userService.getCurrentUserId(),
+      builder: (context, futureSnapshot) {
+        if (futureSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
         }
 
-        if(snapshot.connectionState == ConnectionState.waiting) {
-          return const Text('loading');
+        if (futureSnapshot.hasError || !futureSnapshot.hasData) {
+          return Center(
+            child: Text(
+              'Usuários não encontrados!',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.secondary,
+                fontSize: 16,
+              ),
+            ),
+          );
         }
 
-        return ListView(
-          children: snapshot.data!.map<Widget>((user) => _userListItem(user, context)).toList(),
+        final String? userUid = futureSnapshot.data;
+
+        return Padding(
+          padding: const EdgeInsets.only(left: 20.0),
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: userService.getUsers(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError || !snapshot.hasData) {
+                return Center(
+                  child: Text(
+                    'Erro ao carregar usuários!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.secondary,
+                      fontSize: 16,
+                    ),
+                  ),
+                );
+              }
+
+              final List<Map<String, dynamic>> users =
+              snapshot.data!.where((user) => user['uid'] != userUid).toList();
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: ListView(
+                  children: users
+                      .map<Widget>((user) => _userListItem(user, context))
+                      .toList(),
+                ),
+              );
+            },
+          ),
         );
-      });
-}
+      },
+    );
+  }
 
-Widget _userListItem(Map<String, dynamic> user, BuildContext context) {
-  return UserItem(
+  Widget _userListItem(Map<String, dynamic> user, BuildContext context) {
+    return UserItem(
       name: user['name'],
-      phone: user['phone'],
+      country: user['country'] ?? '',
+      city: user['city'] ?? '',
       onTap: () {
-        print('CHAT');
-        Navigator.pushNamed(context, '/chat');
-      }
-  );
+          Navigator.push(context, MaterialPageRoute(builder: (context) => ChatMessagesView(receiver: user)));
+      },
+    );
+  }
 }
-
