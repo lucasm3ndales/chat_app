@@ -30,7 +30,20 @@ class ChatService {
         newMessage.toMap());
   }
 
+
   Stream<QuerySnapshot> getMessages(String userId_1, String userId_2) {
+    List<String> ids = [userId_1, userId_2];
+    ids.sort();
+    String chatId = ids.join('_');
+
+    return _firestore.collection('chats').doc(chatId)
+        .collection('messages')
+        .orderBy('sentAt', descending: false)
+        .snapshots();
+  }
+
+  //TODO: IMPLEMENTA GET CHATS PARA BUSCAR CHATS ATIVOS
+  Stream<QuerySnapshot> getChats(String userId_1, String userId_2) {
     List<String> ids = [userId_1, userId_2];
     ids.sort();
     String chatId = ids.join('_');

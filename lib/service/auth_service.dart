@@ -34,12 +34,12 @@ class AuthService {
 
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'uid': uid,
-        'name': dto.name.trim(),
+        'name': dto.name.toLowerCase().trim(),
         'phone': phone,
         'email': dto.email.trim(),
         'password': encrypted,
-        'country': dto.country.trim(),
-        'city': dto.city.trim(),
+        'country': dto.country.toLowerCase().trim(),
+        'city': dto.city.toLowerCase().trim(),
         'profileImageUrl': '',
       });
 

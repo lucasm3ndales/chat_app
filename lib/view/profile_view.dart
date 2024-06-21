@@ -69,7 +69,7 @@ class ProfileView extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 60,
-            backgroundImage: NetworkImage(user['avatarUrl'] ?? 'https://via.placeholder.com/150'),
+            backgroundImage: NetworkImage(user['profileImageUrl'] ?? 'https://via.placeholder.com/150'),
           ),
           const SizedBox(height: 16),
           Text(

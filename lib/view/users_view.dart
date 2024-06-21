@@ -17,7 +17,6 @@ class _UsersViewState extends State<UsersView> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60.0),
         child: Container(
-          margin: const EdgeInsets.only(top: 20.0),
           child: AppBar(
             title: Text(
               'Usuários',

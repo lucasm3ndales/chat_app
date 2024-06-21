@@ -1,4 +1,3 @@
-import 'package:chat_app/view/chats_view.dart';
 import 'package:chat_app/view/settings_view.dart';
 import 'package:chat_app/view/users_view.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +14,6 @@ class _HomeViewState extends State<HomeView> {
 
   static final List<Widget> _widgetOptions = <Widget>[
     const UsersView(),
-    const ChatsView(),
     const SettingsView(),
   ];
 
@@ -79,10 +77,6 @@ class _HomeViewState extends State<HomeView> {
             BottomNavigationBarItem(
               icon: Icon(Icons.group),
               label: 'Usuários',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat),
-              label: 'Chats',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings),
