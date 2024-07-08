@@ -1,58 +1,66 @@
 import 'package:chat_app/model/message_model.dart';
 import 'package:chat_app/service/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final UserService _userService = UserService();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> sendMessage(String message, String receiverId) async {
-    final String currentUserId = _auth.currentUser!.uid;
-
-    Map<String, dynamic> currentUser = await _userService.getUser(currentUserId);
+  Future<void> sendMessage(String message, String receiverId, { bool isImage = false }) async {
+    Map<String, dynamic> currentUser =
+        await _userService.getUser();
 
     final Timestamp timestamp = Timestamp.now();
 
     Message newMessage = Message(
         message: message,
-        senderId: currentUserId,
+        senderId: currentUser['uid'],
         receiverId: receiverId,
         sentAt: timestamp,
-        senderName: currentUser['name']);
+        senderName: currentUser['name'],
+        isImage: isImage,
 
-    List<String> ids = [currentUserId, receiverId];
+    );
+
+    List<String> ids = [currentUser['uid'], receiverId];
     ids.sort();
     String chatId = ids.join('_');
 
-    await _firestore.collection('chats').doc(chatId).collection('messages').add(
-        newMessage.toMap());
+    DocumentReference user1Ref = _firestore.collection('users').doc(currentUser['uid']);
+    DocumentReference user2Ref = _firestore.collection('users').doc(receiverId);
+
+    await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .set({
+      'user1': user1Ref,
+      'user2': user2Ref,
+      'lastMessage': message,
+    });
+
+    await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .add(newMessage.toMap());
   }
 
+  Stream<QuerySnapshot> getMessages(String receiverId) async* {
+    var senderId = await _userService.getCurrentUserId();
 
-  Stream<QuerySnapshot> getMessages(String userId_1, String userId_2) {
-    List<String> ids = [userId_1, userId_2];
+    List<String> ids = [senderId!, receiverId];
     ids.sort();
     String chatId = ids.join('_');
 
-    return _firestore.collection('chats').doc(chatId)
+    yield* _firestore
+        .collection('chats')
+        .doc(chatId)
         .collection('messages')
         .orderBy('sentAt', descending: false)
         .snapshots();
   }
 
-  //TODO: IMPLEMENTA GET CHATS PARA BUSCAR CHATS ATIVOS
-  Stream<QuerySnapshot> getChats(String userId_1, String userId_2) {
-    List<String> ids = [userId_1, userId_2];
-    ids.sort();
-    String chatId = ids.join('_');
 
-    return _firestore.collection('chats').doc(chatId)
-        .collection('messages')
-        .orderBy('sentAt', descending: false)
-        .snapshots();
-  }
 
   Future<bool> isSentMessage(Map<String, dynamic> message) async {
     String? senderId = await _userService.getCurrentUserId();

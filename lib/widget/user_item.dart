@@ -6,9 +6,11 @@ class UserItem extends StatelessWidget {
     required this.name,
     required this.country,
     required this.city,
+    required this.url,
     required this.onTap,
   });
 
+  final String url;
   final String name;
   final String country;
   final String city;
@@ -30,16 +32,9 @@ class UserItem extends StatelessWidget {
               padding: const EdgeInsets.all(14.0),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.grey[300],
-                    child: Icon(
-                      Icons.person,
-                      size: 30,
-                      color: Theme.of(context).colorScheme.tertiary,
-                    ),
-                  ),
+                  _renderProfileImage(context, url),
                   const SizedBox(width: 16.0),
+
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -54,7 +49,7 @@ class UserItem extends StatelessWidget {
                       const SizedBox(height: 4.0),
                       if (country.isNotEmpty || city.isNotEmpty)
                         Text(
-                          '${country.isNotEmpty ? country : ''}${city.isNotEmpty ? ' - ' + city : ''}',
+                          '${country.isNotEmpty ? country : ''}${city.isNotEmpty ? ' - $city' : ''}',
                           style: TextStyle(
                             fontSize: 14.0,
                             color: Theme.of(context).colorScheme.tertiary,
@@ -77,4 +72,25 @@ class UserItem extends StatelessWidget {
       ),
     );
   }
+
+  Widget _renderProfileImage(BuildContext context, String url) {
+    if(url.isNotEmpty) {
+      return  CircleAvatar(
+        radius: 30,
+        backgroundColor: Colors.transparent,
+        backgroundImage: NetworkImage(url),
+      );
+    } else {
+      return CircleAvatar(
+        radius: 30,
+        backgroundColor: Colors.grey[300],
+        child: Icon(
+          Icons.person,
+          size: 30,
+          color: Theme.of(context).colorScheme.tertiary,
+        ),
+      );
+    }
+  }
+
 }

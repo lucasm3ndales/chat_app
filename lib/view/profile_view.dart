@@ -5,6 +5,7 @@ class ProfileView extends StatelessWidget {
   const ProfileView({super.key, required this.user});
   final Map<String, dynamic> user;
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -73,7 +74,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            user['name'],
+            capitalize(user['name']),
             style: TextStyle(
               color: Theme.of(context).colorScheme.background,
               fontSize: 24,
@@ -90,7 +91,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 10.0),
           Text(
-            'Telefone: ${phone}',
+            'Telefone: $phone',
             style: TextStyle(
               fontSize: 18,
               color: Theme.of(context).colorScheme.background,
@@ -98,7 +99,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 10.0),
           Text(
-            'País: ${user['country']}',
+            'País: ${capitalize(user['country'])}',
             style: TextStyle(
               fontSize: 18,
               color: Theme.of(context).colorScheme.background,
@@ -106,7 +107,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 10.0),
           Text(
-            'Cidade: ${user['city']}',
+            'Cidade: ${capitalize(user['city'])}',
             style: TextStyle(
               fontSize: 18,
               color: Theme.of(context).colorScheme.background,
@@ -121,11 +122,27 @@ class ProfileView extends StatelessWidget {
   String formatPhoneNumber(String phoneNumber) {
     String digitsOnly = phoneNumber.replaceAll(RegExp(r'\D'), '');
 
-    if (digitsOnly.length == 11) {
-      return '+${digitsOnly.substring(0, 2)} ${digitsOnly.substring(2, 4)} ${digitsOnly.substring(4, 5)} ${digitsOnly.substring(5, 9)} ${digitsOnly.substring(9)}';
+    if (digitsOnly.length == 13) {
+      return '(+${digitsOnly.substring(0, 2)}) ${digitsOnly.substring(2, 4)} ${digitsOnly.substring(4, 5)} ${digitsOnly.substring(5, 9)}-${digitsOnly.substring(9)}';
     } else {
       return phoneNumber;
     }
+  }
+
+  String capitalize(String value) {
+    if (value.isEmpty) {
+      return value;
+    }
+
+    List<String> words = value.split(' ');
+    List<String> capitalizedWords = words.map((word) {
+      if (word.isEmpty) {
+        return word;
+      }
+      return word[0].toUpperCase() + word.substring(1);
+    }).toList();
+
+    return capitalizedWords.join(' ');
   }
 
 }

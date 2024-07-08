@@ -1,3 +1,4 @@
+import 'package:chat_app/view/chats_view.dart';
 import 'package:chat_app/view/settings_view.dart';
 import 'package:chat_app/view/users_view.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ class _HomeViewState extends State<HomeView> {
 
   static final List<Widget> _widgetOptions = <Widget>[
     const UsersView(),
+    const ChatsView(),
     const SettingsView(),
   ];
 
@@ -79,13 +81,17 @@ class _HomeViewState extends State<HomeView> {
               label: 'Usuários',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.message_outlined),
+              label: 'Chats',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.settings),
               label: 'Configurações',
             ),
           ],
           currentIndex: _selectedIndex,
           selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Theme.of(context).colorScheme.tertiary, // Cor dos itens não selecionados
+          unselectedItemColor: Theme.of(context).colorScheme.tertiary,
           onTap: _onItemTapped,
         ),
       ),

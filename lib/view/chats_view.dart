@@ -3,14 +3,16 @@ import 'package:chat_app/view/chat_messages_view.dart';
 import 'package:chat_app/widget/user_item.dart';
 import 'package:flutter/material.dart';
 
-class UsersView extends StatefulWidget {
-  const UsersView({super.key});
+class ChatsView extends StatefulWidget {
+  const ChatsView({super.key});
 
   @override
-  State<UsersView> createState() => _UsersViewState();
+  State<ChatsView> createState() => _ChatsViewState();
 }
 
-class _UsersViewState extends State<UsersView> {
+class _ChatsViewState extends State<ChatsView> {
+  final UserService userService = UserService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,7 +20,7 @@ class _UsersViewState extends State<UsersView> {
         preferredSize: const Size.fromHeight(60.0),
         child: AppBar(
           title: Text(
-            'Usuários',
+            'Chats',
             style: TextStyle(
               fontSize: 24.0,
               color: Theme.of(context).colorScheme.secondary,
@@ -28,31 +30,18 @@ class _UsersViewState extends State<UsersView> {
           backgroundColor: Theme.of(context).colorScheme.background,
         ),
       ),
-      body: _userListWidget(),
+      body: _chatListWidget(),
     );
   }
 
-  Widget _userListWidget() {
+  Widget _chatListWidget() {
     final UserService userService = UserService();
 
     return FutureBuilder<Stream<List<Map<String, dynamic>>>>(
-      future: userService.getUsers(),
+      future: userService.getChats(),
       builder: (context, futureSnapshot) {
         if (futureSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (futureSnapshot.hasError || !futureSnapshot.hasData) {
-          return Center(
-            child: Text(
-              'Usuários não encontrados!',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.secondary,
-                fontSize: 16,
-              ),
-            ),
-          );
+          return Center(child: CircularProgressIndicator());
         }
 
         return Padding(
@@ -60,7 +49,24 @@ class _UsersViewState extends State<UsersView> {
           child: StreamBuilder<List<Map<String, dynamic>>>(
             stream: futureSnapshot.data,
             builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
               final users = snapshot.data ?? [];
+
+              if (users.isEmpty) {
+                return Center(
+                  child: Text(
+                    'Chats não encontrados!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.secondary,
+                      fontSize: 16,
+                    ),
+                  ),
+                );
+              }
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 20),
@@ -77,7 +83,6 @@ class _UsersViewState extends State<UsersView> {
     );
   }
 
-
   Widget _userListItem(Map<String, dynamic> user, BuildContext context) {
     return UserItem(
       url: user['profileImageUrl'],
@@ -85,7 +90,10 @@ class _UsersViewState extends State<UsersView> {
       country: user['country'] ?? '',
       city: user['city'] ?? '',
       onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ChatMessagesView(receiver: user)));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ChatMessagesView(receiver: user)));
       },
     );
   }

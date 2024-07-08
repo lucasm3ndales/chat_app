@@ -1,5 +1,3 @@
-
-
 import 'dart:io';
 import 'package:chat_app/service/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,7 +9,7 @@ class StorageService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 
-  Future<String> uploadImage(File image) async {
+  Future<void> uploadImage(File image) async {
       final userId = await _userService.getCurrentUserId();
 
       if (userId == null) {
@@ -25,7 +23,15 @@ class StorageService {
       final downloadUrl = await snapshot.ref.getDownloadURL();
 
       await _firestore.collection('users').doc(userId).update({'profileImageUrl': downloadUrl});
-      return downloadUrl;
+  }
+
+  Future<String> uploadToChat(File image) async {
+    String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+    Reference storageRef = _storage.ref().child("chat_images").child(fileName);
+
+    UploadTask uploadTask = storageRef.putFile(image);
+    TaskSnapshot snapshot = await uploadTask;
+    return await snapshot.ref.getDownloadURL();
   }
 
 }
