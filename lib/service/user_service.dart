@@ -58,6 +58,8 @@ class UserService {
       }
     }
 
+    await Future.delayed(Duration(milliseconds: 600));
+
     var stream = StreamController<List<Map<String, dynamic>>>();
     stream.add(users);
     return stream.stream;
