@@ -1,13 +1,13 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:chat_app/model/user_model.dart' as model;
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
 
-  Future<Stream<List<Map<String, dynamic>>>> getUsers() async {
+  Future<Stream<List<model.User>>> getUsers() async {
     var userId = await getCurrentUserId();
 
     await Future.delayed(Duration(milliseconds: 600));
@@ -15,54 +15,46 @@ class UserService {
     return _firestore.collection('users').snapshots().map((snapshot) {
       return snapshot.docs
           .map((doc) {
-        final user = doc.data();
-        if (user['uid'] != userId) {
-          return user;
-        }
-        return null;
-      })
-          .where((user) => user != null)
-          .cast<Map<String, dynamic>>()
-          .toList();
+        final u = doc.data();
+        return model.User.fromMap(u);
+      }).where((user) => user.id != userId).toList();
     });
   }
 
-  Future<Stream<List<Map<String, dynamic>>>> getChats() async {
+  Future<Stream<List<model.User>>> getChats() async {
     var userId = await getCurrentUserId();
     var currentUserRef = _firestore.collection('users').doc(userId);
 
-    var querySnapshot = await _firestore.collection('chats').where(
+    var query = _firestore.collection('chats').where(
         Filter.or(
             Filter("user1", isEqualTo: currentUserRef),
             Filter("user2", isEqualTo: currentUserRef)
-        )).get();
+        ));
 
-    List<Map<String, dynamic>> users = [];
+    return query.snapshots().asyncMap((querySnapshot) async {
+      List<model.User> users = [];
 
-    for (var doc in querySnapshot.docs) {
-      var chat = doc.data();
+      for (var doc in querySnapshot.docs) {
+        var chat = doc.data();
 
-      DocumentReference<Map<String, dynamic>> otherUserRef;
+        DocumentReference<Map<String, dynamic>> otherUserRef;
 
-      if (chat['user1'] == currentUserRef) {
-        otherUserRef = chat['user2'];
-      } else {
-        otherUserRef = chat['user1'];
+        if (chat['user1'] == currentUserRef) {
+          otherUserRef = chat['user2'];
+        } else {
+          otherUserRef = chat['user1'];
+        }
+
+        var otherUserDoc = await otherUserRef.get();
+        var otherUserData = otherUserDoc.data();
+
+        if (otherUserData != null && otherUserData.isNotEmpty) {
+          users.add(model.User.fromMap(otherUserData));
+        }
       }
 
-      var otherUserDoc = await otherUserRef.get();
-      var otherUserData = otherUserDoc.data();
-
-      if (otherUserData!.isNotEmpty) {
-        users.add(otherUserData);
-      }
-    }
-
-    await Future.delayed(Duration(milliseconds: 600));
-
-    var stream = StreamController<List<Map<String, dynamic>>>();
-    stream.add(users);
-    return stream.stream;
+      return users;
+    });
   }
 
 
@@ -70,16 +62,15 @@ class UserService {
     return _auth.currentUser?.uid;
   }
 
-  Future<Map<String, dynamic>> getUser() async {
+  Future<model.User> getCurrentUser() async {
     try {
       var userId = await getCurrentUserId();
 
-      DocumentSnapshot snapshot = await _firestore.collection('users').doc(userId).get();
+      DocumentSnapshot<Map<String, dynamic>> doc = await _firestore.collection('users').doc(userId).get();
 
-      await Future.delayed(Duration(milliseconds: 600));
-
-      if (snapshot.exists) {
-        return snapshot.data() as Map<String, dynamic>;
+      if (doc.exists) {
+        await Future.delayed(Duration(milliseconds: 600));
+        return model.User.fromMap(doc.data() as Map<String, dynamic>);
       } else {
         throw Exception('Usuário não encontrado');
       }

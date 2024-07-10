@@ -1,140 +1,302 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chat_app/model/message_model.dart';
+import 'package:chat_app/model/user_model.dart';
 import 'package:chat_app/service/chat_service.dart';
 import 'package:chat_app/service/storage_service.dart';
 import 'package:chat_app/view/profile_view.dart';
 import 'package:chat_app/widget/custom_field.dart';
 import 'package:chat_app/widget/custom_safearea.dart';
+import 'package:chat_app/widget/send_button.dart';
 import 'package:cherry_toast/cherry_toast.dart';
 import 'package:cherry_toast/resources/arrays.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class ChatMessagesView extends StatefulWidget {
   ChatMessagesView({super.key, required this.receiver});
 
-  final Map<String, dynamic> receiver;
+  final User receiver;
   final TextEditingController _messageController = TextEditingController();
   final ChatService _chatService = ChatService();
   final StorageService _storageService = StorageService();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   State<ChatMessagesView> createState() => _ChatMessagesViewState();
 
   void sendMessage() async {
-    if (_messageController.text.isNotEmpty) {
-      await _chatService.sendMessage(_messageController.text, receiver['uid']);
-      _messageController.clear();
+    if (_messageController.text.trim().isNotEmpty) {
+      await _chatService.sendMessage(_messageController.text, receiver.id);
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
     }
   }
 
   Future<void> sendImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
       String downloadUrl = await _storageService.uploadToChat(imageFile);
-      await _chatService.sendMessage(downloadUrl, receiver['uid'], isImage: true);
+      await _chatService.sendMessage(downloadUrl, receiver.id, isImage: true);
+
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void saveImageToGallery(String imageUrl, BuildContext context) async {
+    try {
+      Uint8List bytes =
+          (await NetworkAssetBundle(Uri.parse(imageUrl)).load(imageUrl))
+              .buffer
+              .asUint8List();
+      await ImageGallerySaver.saveImage(bytes);
+
+      CherryToast.success(
+        toastPosition: Position.top,
+        backgroundColor: Theme.of(context).colorScheme.background,
+        iconWidget: Icon(
+          Icons.check_circle_outline_outlined,
+          color: Theme.of(context).colorScheme.surface,
+        ),
+        borderRadius: 12,
+        displayCloseButton: false,
+        animationType: AnimationType.fromTop,
+        toastDuration: const Duration(seconds: 3),
+        title: Text(
+          'Imagem salva com sucesso na galeria!',
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary,
+              fontWeight: FontWeight.w700),
+        ),
+      ).show(context);
+    } catch (e) {
+      CherryToast.error(
+        toastPosition: Position.top,
+        backgroundColor: Theme.of(context).colorScheme.background,
+        iconWidget: Icon(
+          Icons.check_circle_outline_outlined,
+          color: Theme.of(context).colorScheme.surface,
+        ),
+        borderRadius: 12,
+        displayCloseButton: false,
+        animationType: AnimationType.fromTop,
+        toastDuration: const Duration(seconds: 3),
+        title: Text(
+          'Erro ao salvar imagem na galeria!',
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary,
+              fontWeight: FontWeight.w700),
+        ),
+      ).show(context);
     }
   }
 }
 
 class _ChatMessagesViewState extends State<ChatMessagesView> {
-  final ValueNotifier<String> _inputText = ValueNotifier<String>('');
-  final ScrollController _scrollController = ScrollController();
+  bool isInitLoad = true;
+
 
   @override
   void initState() {
     super.initState();
-    widget._messageController.addListener(_handleInputChange);
-    _scrollToBottom();
+
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
-    widget._messageController.removeListener(_handleInputChange);
-    widget._messageController.dispose();
-    _inputText.dispose();
+    widget._scrollController.dispose();
     super.dispose();
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(_scrollController.position.minScrollExtent);
-    }
-  }
-
-  void _handleInputChange() {
-    _inputText.value = widget._messageController.text;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
-      body: Column(
-        children: [
-          CustomSafeArea(
-            height: 120,
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_outlined,
-                      color: Theme.of(context).colorScheme.background,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildUserProfileImage(widget.receiver['profileImageUrl']),
-                  const SizedBox(width: 14),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProfileView(user: widget.receiver),
-                        ),
-                      );
-                    },
-                    child: Text(
-                      capitalize(widget.receiver['name']),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.background,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    return CustomSafeArea(
+      height: 20,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.background,
+        appBar: AppBar(
+          toolbarHeight: 80.0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back,
+                color: Theme.of(context).colorScheme.background, size: 25),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          titleTextStyle: TextStyle(
+            color: Theme.of(context).colorScheme.background,
+            fontSize: 24,
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          title: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ProfileView(user: widget.receiver)),
+              );
+            },
+            child: Row(
+              children: [
+                _buildUserProfileImage(widget.receiver.profileImageUrl!),
+                const SizedBox(width: 14),
+                Text(capitalize(widget.receiver.name)),
+              ],
             ),
           ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
-              },
-              child: Column(
-                children: [
-                  Expanded(
-                    child: _buildMessageList(),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: _buildMessagesList(),
+            ),
+            _buildMessageInput(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessagesList() {
+    return StreamBuilder<List<Message>>(
+      stream: widget._chatService.getMessages(widget.receiver.id),
+      builder: (BuildContext context, AsyncSnapshot<List<Message>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(
+              child: Text('Erro ao carregar mensagens: ${snapshot.error}',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.secondary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16)));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(
+              child: Text(
+            '${capitalize(widget.receiver.name)} está esperando você dizer olá!',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.secondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16),
+          ));
+        } else {
+
+          if (isInitLoad) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _scrollToBottom();
+            });
+            isInitLoad = false;
+          }
+
+          return ListView.builder(
+            controller: widget._scrollController,
+            itemCount: snapshot.data!.length,
+            itemBuilder: (BuildContext context, int index) {
+              Message message = snapshot.data![index];
+              bool isSent = message.senderId == widget.receiver.id;
+              String sentAt = _formatDateTime(message.sentAt);
+              bool isImage = message.isImage;
+
+              return Align(
+                alignment:
+                    isSent ? Alignment.centerLeft : Alignment.centerRight,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.9,
                   ),
-                  _buildUserInput(),
-                ],
+                  child: Container(
+                    margin:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isSent
+                          ? Theme.of(context).colorScheme.tertiary
+                          : Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: isImage
+                        ? _buildImageMessage(message.content)
+                        : _buildTextMessage(
+                            message.content, isSent, context, sentAt),
+                  ),
+                ),
+              );
+            },
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildTextMessage(
+      String messageText, bool isSent, BuildContext context, String sentAt) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          messageText,
+          style: TextStyle(
+            color: isSent
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context).colorScheme.background,
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Text(
+            sentAt,
+            style: TextStyle(
+              color: isSent
+                  ? Theme.of(context).colorScheme.secondary
+                  : Theme.of(context).colorScheme.background,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageMessage(String imageUrl) {
+    return GestureDetector(
+      onTap: () {
+        widget.saveImageToGallery(imageUrl, context);
+      },
+      child: Stack(
+        children: [
+          CachedNetworkImage(
+            imageUrl: imageUrl,
+            placeholder: (context, url) => Center(
+              child: SizedBox(
+                width: 80,
+                height: 80,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Theme.of(context).colorScheme.background,
+                ),
               ),
             ),
+            errorWidget: (context, url, error) => Icon(Icons.error, color: Theme.of(context).colorScheme.error,),
+            width: 300,
+            height: 300,
+            fit: BoxFit.cover,
           ),
         ],
       ),
@@ -142,10 +304,10 @@ class _ChatMessagesViewState extends State<ChatMessagesView> {
   }
 
   Widget _buildUserProfileImage(String url) {
-    if(url.isNotEmpty) {
+    if (url.isNotEmpty) {
       return CircleAvatar(
         backgroundColor: Colors.transparent,
-        backgroundImage: NetworkImage(widget.receiver['profileImageUrl']),
+        backgroundImage: NetworkImage(widget.receiver.profileImageUrl!),
         radius: 20,
       );
     } else {
@@ -158,175 +320,45 @@ class _ChatMessagesViewState extends State<ChatMessagesView> {
     }
   }
 
-  Widget _buildMessageList() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: widget._chatService.getMessages(widget.receiver['uid']),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Center(child: Text('Erro ao buscar mensagens!'));
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(
-            child: Text(
-              'Diga algo para ${capitalize(widget.receiver['name'])}!',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.secondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          );
-        }
-
-        return ListView.builder(
-          controller: _scrollController,
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            var message = snapshot.data!.docs[index];
-            return _buildMessageItem(message);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildMessageItem(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-
-    Timestamp timestamp = data['sentAt'];
-    DateTime dateTime = timestamp.toDate();
-    String formatted = DateFormat().add_Hm().format(dateTime);
-
-    bool isImage = data['isImage'] ?? false;
-
-    return FutureBuilder<bool>(
-      future: widget._chatService.isSentMessage(data),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        } else {
-          bool isSentMessage = snapshot.data ?? false;
-
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 14.0),
-            child: Row(
-              mainAxisAlignment: isSentMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: isSentMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      constraints: const BoxConstraints(maxWidth: 280),
-                      padding: const EdgeInsets.all(10.0),
-                      decoration: BoxDecoration(
-                        color: isSentMessage ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.tertiary,
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (isImage)
-                            GestureDetector(
-                              onTap: () async {
-                                Directory docDir = await getApplicationDocumentsDirectory();
-                                String filePath = '${docDir.path}/${data['fileName']}';
-                                File file = File(filePath);
-                                await file.writeAsBytes((await NetworkAssetBundle(Uri.parse(data['message']))
-                                    .load(data['message']))
-                                    .buffer
-                                    .asUint8List());
-                                CherryToast.success(
-                                  toastPosition: Position.top,
-                                  backgroundColor: Theme.of(context).colorScheme.background,
-                                  iconWidget: Icon(
-                                    Icons.error_outline,
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                  borderRadius: 12,
-                                  displayCloseButton: false,
-                                  animationType: AnimationType.fromTop,
-                                  toastDuration: const Duration(seconds: 3),
-                                  title: Text(
-                                    'Imagem salva com sucesso!',
-                                    style: TextStyle(
-                                        color: Theme.of(context).colorScheme.secondary,
-                                        fontWeight: FontWeight.w700),
-                                  ),
-                                ).show(context);
-                              },
-                              child: Image.network(data['message']),
-                            )
-                          else
-                            Text(
-                              data['message'],
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                color: isSentMessage ? Theme.of(context).colorScheme.background : Theme.of(context).colorScheme.secondary,
-                              ),
-                            ),
-                          const SizedBox(height: 5.0),
-                          Row(
-                            children: [
-                              Expanded(child: Container()),
-                              Text(
-                                formatted,
-                                style: TextStyle(
-                                  fontSize: 12.0,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildUserInput() {
+  Widget _buildMessageInput() {
     return Container(
-      padding: const EdgeInsets.all(10),
-      color: Theme.of(context).colorScheme.tertiary,
+      color: Theme.of(context).colorScheme.primary,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: CustomField(
               controller: widget._messageController,
-              hintText: 'Escreva algo para ${capitalize(widget.receiver['name'])}',
-              obscureText: false,
               isFiled: true,
-              filedColor: Theme.of(context).colorScheme.background,
+              filedColor: Theme.of(context).colorScheme.tertiary,
+              textStyle: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+              hintText: 'Escreva algo para ${capitalize(widget.receiver.name)}',
             ),
           ),
-          const SizedBox(width: 12),
-          ValueListenableBuilder<String>(
-            valueListenable: _inputText,
-            builder: (context, value, child) {
-              return CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                child: IconButton(
-                  onPressed: value.isNotEmpty ? widget.sendMessage : () => widget.sendImage(),
-                  icon: Icon(
-                    value.isNotEmpty ? Icons.send : Icons.image_outlined,
-                    color: Theme.of(context).colorScheme.background,
-                  ),
-                ),
-              );
-            },
-          ),
+          SendButton(
+            sendMessageCallback: widget.sendMessage,
+            sendImageCallback: widget.sendImage,
+            messageController: widget._messageController,
+          )
         ],
       ),
     );
+  }
+
+  void _scrollToBottom() {
+    widget._scrollController.jumpTo(widget._scrollController.position.maxScrollExtent);
+  }
+
+  bool whoSentMessage(Map<String, dynamic> message) {
+    if (widget.receiver.id == message['senderId']) {
+      return true;
+    }
+    return false;
   }
 
   String capitalize(String value) {
@@ -343,5 +375,11 @@ class _ChatMessagesViewState extends State<ChatMessagesView> {
     }).toList();
 
     return capitalizedWords.join(' ');
+  }
+
+  String _formatDateTime(Timestamp timestamp) {
+    DateTime dateTime = timestamp.toDate();
+    String formattedDateTime = DateFormat('HH:mm').format(dateTime);
+    return formattedDateTime;
   }
 }

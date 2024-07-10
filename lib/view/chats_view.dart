@@ -1,3 +1,4 @@
+import 'package:chat_app/model/user_model.dart';
 import 'package:chat_app/service/user_service.dart';
 import 'package:chat_app/view/chat_messages_view.dart';
 import 'package:chat_app/widget/user_item.dart';
@@ -37,7 +38,7 @@ class _ChatsViewState extends State<ChatsView> {
   Widget _chatListWidget() {
     final UserService userService = UserService();
 
-    return FutureBuilder<Stream<List<Map<String, dynamic>>>>(
+    return FutureBuilder<Stream<List<User>>>(
       future: userService.getChats(),
       builder: (context, futureSnapshot) {
         if (futureSnapshot.connectionState == ConnectionState.waiting) {
@@ -46,7 +47,7 @@ class _ChatsViewState extends State<ChatsView> {
 
         return Padding(
           padding: const EdgeInsets.only(left: 20.0),
-          child: StreamBuilder<List<Map<String, dynamic>>>(
+          child: StreamBuilder<List<User>>(
             stream: futureSnapshot.data,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -83,12 +84,12 @@ class _ChatsViewState extends State<ChatsView> {
     );
   }
 
-  Widget _userListItem(Map<String, dynamic> user, BuildContext context) {
+  Widget _userListItem(User user, BuildContext context) {
     return UserItem(
-      url: user['profileImageUrl'],
-      name: user['name'],
-      country: user['country'] ?? '',
-      city: user['city'] ?? '',
+      url: user.profileImageUrl ?? '',
+      name: user.name,
+      country: user.country,
+      city: user.city,
       onTap: () {
         Navigator.push(
             context,

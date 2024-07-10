@@ -1,50 +1,51 @@
 import 'dart:convert';
-import 'package:chat_app/model/user_model.dart';
+import 'package:chat_app/model/user_model.dart' as model;
 import 'package:crypto/crypto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
 
-  Future<UserCredential> siginWithEmailPass(
+  Future<auth.UserCredential> siginWithEmailPass(
       String email, String password) async {
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      auth.UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
       return userCredential;
-    } on FirebaseAuthException catch (ex) {
+    } on auth.FirebaseAuthException catch (ex) {
       throw Exception(ex);
     }
   }
 
-  Future<String> signUp(UserDTO dto) async {
+  Future<String> signUp(model.UserDTO dto) async {
     try {
-      UserCredential userCredential =
+      auth.UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: dto.email,
         password: dto.password,
       );
 
-      String? uid = userCredential.user?.uid;
+      String? id = userCredential.user?.uid;
 
       String encrypted = sha256.convert(utf8.encode(dto.password.trim())).toString();
 
       String phone = dto.phone.replaceAll(RegExp(r'\D'), '').trim();
 
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'uid': uid,
-        'name': dto.name.toLowerCase().trim(),
-        'phone': phone,
-        'email': dto.email.trim(),
-        'password': encrypted,
-        'country': dto.country.toLowerCase().trim(),
-        'city': dto.city.toLowerCase().trim(),
-        'profileImageUrl': '',
-      });
+      model.User user = new model.User(
+          id: id!,
+          name: dto.name.toLowerCase().trim(),
+          phone: phone,
+          email: dto.email.trim(),
+          password: encrypted,
+          country: dto.country.toLowerCase().trim(),
+          city: dto.city.toLowerCase().trim()
+      );
+
+      await FirebaseFirestore.instance.collection('users').doc(id).set(user.toMap());
 
       return 'Conta criada com sucesso!';
-    } on FirebaseAuthException catch (ex) {
+    } on auth.FirebaseAuthException catch (ex) {
       throw Exception(ex);
     }
   }

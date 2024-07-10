@@ -9,7 +9,7 @@ class StorageService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 
-  Future<void> uploadImage(File image) async {
+  Future<void> uploadImageToProfile(File image) async {
       final userId = await _userService.getCurrentUserId();
 
       if (userId == null) {

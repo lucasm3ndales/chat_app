@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chat_app/model/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:chat_app/service/auth_service.dart';
@@ -26,7 +28,8 @@ class _SettingsViewState extends State<SettingsView> {
     if (picked != null) {
       final File imageFile = File(picked.path);
       try {
-        await storageService.uploadImage(imageFile);
+        await storageService.uploadImageToProfile(imageFile);
+        setState(() {});
       } catch (ex) {
         CherryToast.error(
           toastPosition: Position.top,
@@ -58,11 +61,11 @@ class _SettingsViewState extends State<SettingsView> {
       body: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Center(
-          child: FutureBuilder<Map<String, dynamic>>(
-            future: userService.getUser(),
+          child: FutureBuilder<User>(
+            future: userService.getCurrentUser(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
+                return const CircularProgressIndicator();
               } else if (!snapshot.hasData || snapshot.hasError) {
                 return Center(
                   child: Text(
@@ -76,17 +79,17 @@ class _SettingsViewState extends State<SettingsView> {
                 );
               } else {
                 final user = snapshot.data!;
-                final phone = formatPhoneNumber(user['phone']);
+                final phone = formatPhoneNumber(user.phone);
 
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 20.0),
-                    _buildProfileImage(user['profileImageUrl']),
+                    _buildProfileImage(user.profileImageUrl!),
                     const SizedBox(height: 20.0),
                     Text(
-                      capitalize(user['name']),
+                      capitalize(user.name),
                       style: TextStyle(
                         fontSize: 24.0,
                         fontWeight: FontWeight.bold,
@@ -95,7 +98,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 10.0),
                     Text(
-                      'Email: ${user['email']}',
+                      'Email: ${user.email}',
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
@@ -113,7 +116,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 10.0),
                     Text(
-                      'País: ${capitalize(user['country'])}',
+                      'País: ${capitalize(user.country)}',
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
@@ -122,14 +125,14 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 10.0),
                     Text(
-                      'Cidade: ${capitalize(user['city'])}',
+                      'Cidade: ${capitalize(user.city)}',
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
-                    Expanded(child: Container()), // Expande para ocupar o espaço restante
+                    Expanded(child: Container()),
                     CustomButton(
                       text: 'LOGOUT',
                       onPressed: () {
@@ -153,10 +156,22 @@ class _SettingsViewState extends State<SettingsView> {
         onTap: () => _showProfileImageDialog(profileUrl),
         child: Stack(
           children: [
-            CircleAvatar(
-              radius: 80,
-              backgroundColor: Colors.transparent,
-              backgroundImage: NetworkImage(profileUrl),
+            CachedNetworkImage(
+              imageUrl: profileUrl,
+              imageBuilder: (context, imageProvider) => CircleAvatar(
+                radius: 80,
+                backgroundColor: Colors.transparent,
+                backgroundImage: imageProvider,
+              ),
+              placeholder: (context, url) => CircleAvatar(
+                radius: 80,
+                backgroundColor: Colors.grey[200],
+              ),
+              errorWidget: (context, url, error) => CircleAvatar(
+                radius: 80,
+                backgroundColor: Colors.grey[200],
+                child: Icon(Icons.error),
+              ),
             ),
             Positioned(
               right: 0,

@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chat_app/model/user_model.dart';
 import 'package:chat_app/widget/custom_safearea.dart';
 import 'package:flutter/material.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key, required this.user});
-  final Map<String, dynamic> user;
+  final User user;
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +23,9 @@ class ProfileView extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: Icon(
-                      Icons.arrow_back_outlined,
+                      Icons.arrow_back,
                       color: Theme.of(context).colorScheme.background,
+                      size: 25,
                     ),
                     onPressed: () {
                       Navigator.of(context).pop();
@@ -61,20 +64,17 @@ class ProfileView extends StatelessWidget {
   }
 
   Widget _buildUserProfile(BuildContext context) {
-    final phone = formatPhoneNumber(user['phone']);
+    final phone = formatPhoneNumber(user.phone);
 
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 60,
-            backgroundImage: NetworkImage(user['profileImageUrl'] ?? 'https://via.placeholder.com/150'),
-          ),
+         _buildProfileImage(context, user.profileImageUrl!),
           const SizedBox(height: 16),
           Text(
-            capitalize(user['name']),
+            capitalize(user.name),
             style: TextStyle(
               color: Theme.of(context).colorScheme.background,
               fontSize: 24,
@@ -83,7 +83,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 10.0),
           Text(
-            'E-mail: ${user['email']}',
+            'E-mail: ${user.email}',
             style: TextStyle(
               fontSize: 18,
               color: Theme.of(context).colorScheme.background,
@@ -99,7 +99,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 10.0),
           Text(
-            'País: ${capitalize(user['country'])}',
+            'País: ${capitalize(user.country)}',
             style: TextStyle(
               fontSize: 18,
               color: Theme.of(context).colorScheme.background,
@@ -107,7 +107,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 10.0),
           Text(
-            'Cidade: ${capitalize(user['city'])}',
+            'Cidade: ${capitalize(user.city)}',
             style: TextStyle(
               fontSize: 18,
               color: Theme.of(context).colorScheme.background,
@@ -117,6 +117,35 @@ class ProfileView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildProfileImage(BuildContext context,  String profileUrl) {
+    if (profileUrl.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: profileUrl,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          radius: 80,
+          backgroundColor: Colors.transparent,
+          backgroundImage: imageProvider,
+        ),
+        placeholder: (context, url) => CircleAvatar(
+          radius: 80,
+          backgroundColor: Colors.grey[200],
+        ),
+        errorWidget: (context, url, error) => CircleAvatar(
+          radius: 80,
+          backgroundColor: Colors.grey[200],
+          child: Icon(Icons.error),
+        ),
+      );
+    } else {
+      return CircleAvatar(
+        radius: 80,
+        backgroundColor: Theme.of(context).colorScheme.tertiary,
+        child: Icon(Icons.person,
+            size: 80, color: Theme.of(context).colorScheme.background),
+      );
+    }
   }
 
   String formatPhoneNumber(String phoneNumber) {

@@ -1,7 +1,7 @@
 
 
 class User {
-  String uid;
+  String id;
   String name;
   String phone;
   String email;
@@ -11,7 +11,7 @@ class User {
   String? profileImageUrl;
 
   User({
-    required this.uid,
+    required this.id,
     required this.name,
     required this.phone,
     required this.email,
@@ -23,15 +23,30 @@ class User {
 
   Map<String, dynamic> toMap() {
     return {
-      'uid': uid,
+      'id': id,
       'name': name,
       'phone': phone,
       'email': email,
       'password': password,
       'country': country,
       'city': city,
+      'profileImageUrl': profileImageUrl,
     };
   }
+
+  factory User.fromMap(Map<String, dynamic> obj) {
+    return User(
+        id: obj['id'],
+        name: obj['name'],
+        phone: obj['phone'],
+        email: obj['email'],
+        password: obj['password'],
+        country: obj['country'],
+        city: obj['city'],
+        profileImageUrl: obj['profileImageUrl'] ?? '',
+    );
+  }
+
 }
 
 class UserDTO {
