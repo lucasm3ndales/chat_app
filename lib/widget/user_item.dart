@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class UserItem extends StatelessWidget {
@@ -73,20 +74,32 @@ class UserItem extends StatelessWidget {
     );
   }
 
-  Widget _renderProfileImage(BuildContext context, String url) {
+  Widget _renderProfileImage(BuildContext context, String imageUrl) {
     if(url.isNotEmpty) {
-      return  CircleAvatar(
-        radius: 30,
-        backgroundColor: Colors.transparent,
-        backgroundImage: NetworkImage(url),
+      return   CachedNetworkImage(
+        imageUrl: imageUrl,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          radius: 40,
+          backgroundColor: Colors.transparent,
+          backgroundImage: imageProvider,
+        ),
+        placeholder: (context, url) => CircleAvatar(
+          radius: 40,
+          backgroundColor: Colors.grey[200],
+        ),
+        errorWidget: (context, url, error) => CircleAvatar(
+          radius: 40,
+          backgroundColor: Colors.grey[200],
+          child: Icon(Icons.error),
+        ),
       );
     } else {
       return CircleAvatar(
-        radius: 30,
+        radius: 40,
         backgroundColor: Colors.grey[300],
         child: Icon(
           Icons.person,
-          size: 30,
+          size: 40,
           color: Theme.of(context).colorScheme.tertiary,
         ),
       );

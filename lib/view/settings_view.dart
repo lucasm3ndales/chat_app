@@ -224,9 +224,22 @@ class _SettingsViewState extends State<SettingsView> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundImage: NetworkImage(imageUrl),
+                CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  imageBuilder: (context, imageProvider) => CircleAvatar(
+                    radius: 80,
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: imageProvider,
+                  ),
+                  placeholder: (context, url) => CircleAvatar(
+                    radius: 80,
+                    backgroundColor: Colors.grey[200],
+                  ),
+                  errorWidget: (context, url, error) => CircleAvatar(
+                    radius: 80,
+                    backgroundColor: Colors.grey[200],
+                    child: Icon(Icons.error),
+                  ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

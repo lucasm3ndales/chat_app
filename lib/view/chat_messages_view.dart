@@ -303,17 +303,29 @@ class _ChatMessagesViewState extends State<ChatMessagesView> {
     );
   }
 
-  Widget _buildUserProfileImage(String url) {
-    if (url.isNotEmpty) {
-      return CircleAvatar(
-        backgroundColor: Colors.transparent,
-        backgroundImage: NetworkImage(widget.receiver.profileImageUrl!),
-        radius: 20,
+  Widget _buildUserProfileImage(String imageUrl) {
+    if (imageUrl.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          radius: 25,
+          backgroundColor: Colors.transparent,
+          backgroundImage: imageProvider,
+        ),
+        placeholder: (context, url) => CircleAvatar(
+          radius: 25,
+          backgroundColor: Colors.grey[200],
+        ),
+        errorWidget: (context, url, error) => CircleAvatar(
+          radius: 25,
+          backgroundColor: Colors.grey[200],
+          child: Icon(Icons.error),
+        ),
       );
     } else {
       return CircleAvatar(
         backgroundColor: Theme.of(context).colorScheme.tertiary,
-        radius: 20,
+        radius: 25,
         child: Icon(Icons.person,
             size: 25, color: Theme.of(context).colorScheme.background),
       );
